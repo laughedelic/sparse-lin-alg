@@ -14,14 +14,12 @@ Cabal-version:       >=1.2
 
 
 Library
-  Hs-source-dirs:      src
   Exposed-modules:     SparseMatrix
-  Ghc-options:         -Wall
-  Build-depends:       base
-  -- Other-modules:       
+  -- Ghc-options:         -Wall
+  Build-depends:       base, containers
 
-Test-Suite test-sparse-matrix
-  Hs-source-dirs:      src
-  Type:                detailed-1.0
-  Test-module:         Tests
-  Build-depends:       base
+Test-Suite tests
+  Type:                exitcode-stdio-1.0
+  Main-is:             Tests.hs
+  Ghc-options:         -threaded
+  Build-depends:       base, containers, QuickCheck >= 2, test-framework, test-framework-quickcheck2
