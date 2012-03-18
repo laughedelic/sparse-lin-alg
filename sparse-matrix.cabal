@@ -1,0 +1,27 @@
+Name:                sparse-matrix
+Version:             0.1
+Synopsis:            Small library for effective representation of sparse matrices and computations with them
+-- Description:         
+License:             BSD3
+License-file:        LICENSE
+Author:              Alexey Alekhin
+Maintainer:          alexey.alekhin@me.com
+-- Copyright:           
+Category:            Math
+Build-type:          Simple
+Extra-source-files:  README.md
+Cabal-version:       >=1.2
+
+
+Library
+  Hs-source-dirs:      src
+  Exposed-modules:     SparseMatrix
+  Ghc-options:         -Wall
+  Build-depends:       base
+  -- Other-modules:       
+
+Test-Suite test-sparse-matrix
+  Hs-source-dirs:      src
+  Type:                detailed-1.0
+  Test-module:         Tests
+  Build-depends:       base
