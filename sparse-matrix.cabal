@@ -2,6 +2,7 @@ Name:                sparse-matrix
 Version:             0.1
 Synopsis:            Small library for effective representation of sparse matrices and computations with them
 -- Description:         
+Homepage:            http://github.com/laughedelic/sparse-matrix
 License:             BSD3
 License-file:        LICENSE
 Author:              Alexey Alekhin
