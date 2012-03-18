@@ -41,8 +41,7 @@ This is a small Haskell library providing effective representation for sparse ma
     ```bash
     $ ./dist/build/tests/tests
     ```
-
-   You can use some options with this test-script (for example run tests concurrently), see option `-h`.
+    You can use some options with this test-script (for example run tests concurrently), see option `-h`.
 
 6. Install package:
 
