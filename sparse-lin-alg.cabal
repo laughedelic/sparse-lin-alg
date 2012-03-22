@@ -1,18 +1,22 @@
 Name:                sparse-lin-alg
 Version:             0.2
-Synopsis:            Small library for effective representation of sparse matrices and computations with them
--- Description:         
+Synopsis:            Small library for effective linear algebra on sparse matrices
+Description:         Sparse matrices and vectors are represented using IntMaps, which store non-zero values. There are some useful functions for computations on them. Also some linear algebra algorithms will be included. At the moment, the only is reduction of the matrix to the staircase form.
 Homepage:            http://github.com/laughedelic/sparse-lin-alg
+Bug-reports:         http://github.com/laughedelic/sparse-lin-alg/issues
 License:             BSD3
 License-file:        LICENSE
 Author:              Alexey Alekhin
 Maintainer:          alexey.alekhin@me.com
--- Copyright:           
 Category:            Math
 Build-type:          Simple
 Extra-source-files:  README.md
-Cabal-version:       >=1.2
+Cabal-version:       >=1.8
 
+Source-repository head
+  Type:              git
+  Location:          git://github.com/laughedelic/sparse-lin-alg.git
+  Branch:            master
 
 Library
   Exposed-modules:     Math.LinearAlgebra.Sparse.Matrix
