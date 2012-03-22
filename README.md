@@ -1,50 +1,22 @@
-# Synopsis #
+## Synopsis ##
 
-This is a small Haskell library providing effective representation for sparse matrices and some linear algebra operations.
+This is a small Haskell library providing effective representation for [sparse matrices](http://en.wikipedia.org/wiki/Sparse_matrix) and some linear algebra operations on them.
 
-# Installation #
+## Installation ##
 
 1. Dowload it:
 
     ```bash
-    $ git clone git://github.com/laughedelic/sparse-matrix.git
+    $ git clone git://github.com/laughedelic/sparse-lin-alg.git
+    $ cd sparse-lin-alg
     ```
 
-2. Configure
-
- * There are QuickCheck test, so if additional depensies are ok for you, configure with tests:
-
-    ```bash
-    $ cabal configure --enable-tests
-    ```
-
- * Else, the only build-depensy is `base`, so just configure
-
-    ```bash
-    $ cabal configure
-    ```
-
-3. Build package:
-
-    ```bash
-    $ cabal build
-    ```
-
-4. Build Haddock documentation (optional):
-
-    ```bash
-    $ cabal haddock
-    ```
-
-5. Run tests, if you configured package with `--enable-tests` option
-
-    ```bash
-    $ ./dist/build/tests/tests
-    ```
-    You can use some options with this test-script (for example run tests concurrently), see option `-h`.
-
-6. Install package:
+2. Install
 
     ```bash
     $ cabal install
     ```
+
+That's it!
+
+There are some QuickCheck tests, but at the moment they don't cover whole library, so check it out in the future versions.
