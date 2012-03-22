@@ -5,12 +5,14 @@ import Test.Framework.Providers.QuickCheck2 (testProperty)
 import Test.QuickCheck
 
 import Control.Monad (liftM)
-import SparseMatrix
-
 import Data.Function (on)
 import Data.Foldable as F
 import Data.List     as L
 import Data.IntMap   as M hiding ((!))
+
+import Math.LinearAlgebra.Sparse.Matrix
+import Math.LinearAlgebra.Sparse.Vector
+import Math.LinearAlgebra.Sparse.Algorithms.Staircase 
 
 
 ----------------------------------------------------------------------
@@ -27,7 +29,7 @@ tests = [ testgr_lookup_update
 -- | Generates non negative number
 genNonNegative = liftM abs arbitrary
 
-genNonZero :: (Arbitrary α, Num α) => Gen α
+genNonZero :: (Arbitrary α, Eq α, Num α) => Gen α
 genNonZero = do x <- arbitrary
                 return $ if x == 0 then 1 else x
 
@@ -48,7 +50,7 @@ genIndex (m,n) | m > n     = return 0
 
 -- | Generates IntMap of given size with indecies in given diapason 
 --   and arbitrary values
-genSVec :: (Arbitrary α, Num α) => Int -> (Int,Int) -> Gen (SVec α)
+genSVec :: (Arbitrary α, Eq α, Num α) => Int -> (Int,Int) -> Gen (SVec α)
 genSVec = genSVec' genNonZero
 
 -- | Generates sparse vector
@@ -60,14 +62,14 @@ genSVec' g n (a,b) = liftM M.fromList
                    $ vectorOf n $ genPair (choose (a,b)) g
 
 -- | Generates `SparseVector` of given length with arbitrary values
-genSparseVector :: (Arbitrary α, Num α) => Int -> Gen (SparseVector α)
+genSparseVector :: (Arbitrary α, Eq α, Num α) => Int -> Gen (SparseVector α)
 genSparseVector m = do
     n <- choose (0,m)
     v <- genSVec n (1,m)
     return $ SV m v
 
 -- | Arbitrary `SparseVector` of random length
-instance (Arbitrary α, Num α) => Arbitrary (SparseVector α) where
+instance (Arbitrary α, Eq α, Num α) => Arbitrary (SparseVector α) where
     arbitrary = genSparseVector =<< genNonNegative
 
 -- | Generates list of given length with frequent zeroes
@@ -78,7 +80,7 @@ genSparseList n = vectorOf n $ frequency [(4, return 0), (1, arbitrary)]
 -- SPARSE MATRIX DATATYPE --
 ----------------------------
 
-genSparseMatrix :: (Arbitrary α, Num α) => (Int,Int) -> Gen (SparseMatrix α)
+genSparseMatrix :: (Arbitrary α, Eq α, Num α) => (Int,Int) -> Gen (SparseMatrix α)
 genSparseMatrix (h,w) = do
     n <- choose (1,w)
     let genRow = genSVec n (1,w)
@@ -86,10 +88,10 @@ genSparseMatrix (h,w) = do
     rows <- genSVec' genRow m (1,h)
     return $ SM (h,w) rows
 
-instance (Arbitrary α, Num α) => Arbitrary (SparseMatrix α) where
+instance (Arbitrary α, Eq α, Num α) => Arbitrary (SparseMatrix α) where
     arbitrary = genSparseMatrix =<< genPair genNonNegative genNonNegative
         
-genAssocList :: (Arbitrary α, Num α) => Int -> (Int,Int) -> Gen [ ((Index,Index), α) ]
+genAssocList :: (Arbitrary α, Eq α, Num α) => Int -> (Int,Int) -> Gen [ ((Index,Index), α) ]
 genAssocList n (h,w) = liftM ( (((h,w),0) :) . nubBy ((==) `on` fst) ) $
     vectorOf n $ genPair (genPair (genIndex (1,h)) (genIndex (1,w))) genNonZero
 
