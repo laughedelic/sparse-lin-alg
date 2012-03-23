@@ -74,6 +74,13 @@ idMx :: (Num α, Eq α) => Int -> SparseMatrix α
 idMx n = diagonalMx (L.replicate n 1)
 
 --------------------------------------------------------------------------------
+-- COMBINING MATRICES --
+------------------------
+
+-- zipElemsWith :: SparseMatrix α -> SparseMatrix β -> SparseMatrix (α,β)
+-- zipElemsWith f ma mb = 
+
+--------------------------------------------------------------------------------
 -- ADDING/DELETING ROW/COLUMNS --
 ---------------------------------
 
@@ -130,6 +137,11 @@ partitionMx p (SM (h,w) m) = (SM (st,w) t, SM (h-st,w) f)
     where (t,f) = partitionMap (p . SV w) m
           st = size t
 
+separateMx :: (Num α) => (SparseVector α -> Bool) -> SparseMatrix α -> (SparseMatrix α, SparseMatrix α)
+separateMx p (SM (h,w) m) = (SM (h,w) t, SM (h,w) f)
+    where (t,f) = M.partition (p . SV w) m
+          st = size t
+
 --------------------------------------------------------------------------------
 -- LOOKUP/UPDATE --
 -------------------
@@ -168,6 +180,12 @@ ins :: (Num α, Eq α) => SparseMatrix α -> ((Index,Index), α) -> SparseMatrix
 m `ins` ((i,j),0) = m `erase` (i,j)
 m `ins` ((i,j),x) = m { mx = newMx }
     where newMx = M.insertWith' M.union i (M.singleton j x) (mx m)
+
+findRowIndices :: (SparseVector α -> Bool) -> SparseMatrix α -> [Key]
+findRowIndices  p m = fst $ M.mapAccumRWithKey (\acc i x -> (if p (SV (width m) x) then i:acc else acc,x)) [] (mx m)
+
+findRowIndicesR :: (SparseVector α -> Bool) -> SparseMatrix α -> [Key]
+findRowIndicesR p m = fst $ M.mapAccumWithKey  (\acc i x -> (if p (SV (width m) x) then i:acc else acc,x)) [] (mx m)
 
 --------------------------------------------------------------------------------
 -- TO/FROM LIST --
