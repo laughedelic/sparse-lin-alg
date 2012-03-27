@@ -27,9 +27,6 @@ data SparseMatrix α = SM
 instance Functor SparseMatrix where
     fmap f m = m {mx = fmap (fmap f) (mx m)}
 
--- instance Foldable SparseMatrix where
---     foldr f d m = F.foldr f d $ fmap (F.foldr f d) (mx m)
-
 instance (Eq α, Num α) => Num (SparseMatrix α) where
     (SM (h1,w1) m) + (SM (h2,w2) n) 
         = SM (max h1 h2, max w1 w2) $ M.filter (not . M.null)
@@ -59,11 +56,6 @@ emptyMx = SM (0,0) M.empty
 zeroMx ::  Num α => (Int, Int) -> SparseMatrix α
 zeroMx (h,w) = setSize (h,w) emptyMx
 
--- | Checks if vector has no non-zero values (i.e. is empty)
-isZeroVec, isNotZeroVec :: SparseVector α -> Bool
-isZeroVec = M.null . vec
-isNotZeroVec = not . isZeroVec
-
 -- | Checks if matrix has no non-zero values (i.e. is empty)
 isZeroMx, isNotZeroMx  :: SparseMatrix α -> Bool
 isZeroMx = M.null . mx
@@ -87,21 +79,15 @@ idMx n = diagonalMx (L.replicate n 1)
 -- | Adds row at given index, increasing matrix height by 1 
 --   and shifting indexes after it
 addRow :: (Num α) => SparseVector α -> Index -> SparseMatrix α -> SparseMatrix α
-addRow v i m 
-    | isZeroMx m = SM (1, dim v)
-                      (singleton 1 (vec v))
-    | otherwise  = SM (height m + 1, max (width m) (dim v))
-                      (addElem mbv i (mx m))
+addRow v i m = SM (height m + 1, max (width m) (dim v))
+                  (addElem mbv i (mx m))
     where mbv = if isZeroVec v then Nothing else Just (vec v)
 
 -- | Adds column at given index, increasing matrix width by 1 
 --   and shifting indexes after it
 addCol :: (Num α) => SparseVector α -> Index -> SparseMatrix α -> SparseMatrix α
-addCol v j m 
-    | isZeroMx m = SM (dim v, 1)
-                      (M.map (singleton 1) (vec v))
-    | otherwise  = SM (max (height m) (dim v), width m + 1)
-                      (M.mapWithKey insCol (mx m))
+addCol v j m = SM (max (height m) (dim v), width m + 1)
+                  (M.mapWithKey insCol (mx m))
     where insCol i row = addElem (M.lookup i (vec v)) j row
 
 -- | Just adds zero row at given index
@@ -115,14 +101,14 @@ addZeroCol i m = addCol (zeroVec (height m)) i m
 -- | Deletes row at given index, decreasing matrix height by 1 
 --   and shifting indexes after it
 delRow :: (Num α) => Index -> SparseMatrix α -> SparseMatrix α
-delRow i m | isZeroMx m = m
+delRow i m | isZeroMx m = setSize (height m - 1, width m) m
            | otherwise  = SM (height m - 1, width m)
                              (delElem i (mx m))
 
 -- | Deletes column at given index, decreasing matrix width by 1 
 --   and shifting indexes after it
 delCol :: (Num α) => Index -> SparseMatrix α -> SparseMatrix α
-delCol j m | isZeroMx m = m
+delCol j m | isZeroMx m = setSize (height m, width m - 1) m
            | otherwise  = SM (height m, width m - 1)
                              (M.map (delElem j) (mx m))
 
@@ -136,11 +122,30 @@ partitionMx :: (Num α) => (SparseVector α -> Bool) -> SparseMatrix α -> (Spar
 partitionMx p (SM (h,w) m) = (SM (st,w) t, SM (h-st,w) f)
     where (t,f) = partitionMap (p . SV w) m
           st = size t
+-- ^ WARNING: doesn't work with empty rows
 
 separateMx :: (Num α) => (SparseVector α -> Bool) -> SparseMatrix α -> (SparseMatrix α, SparseMatrix α)
 separateMx p (SM (h,w) m) = (SM (h,w) t, SM (h,w) f)
     where (t,f) = M.partition (p . SV w) m
           st = size t
+
+-- TODO: more effective implementation (is done in exchangeRows?)
+-- moveRow i j m | i == j    = m
+--               | otherwise = addRow r j $ delRow i m
+--     where r = m `row` i
+
+popRow i m = (m `row` i, delRow i m)
+
+r |> m = addRow r 1 m
+
+m <| r = addRow r (height m + 1) m
+
+replaceRow r i m | isZeroVec r = eraseRow i m
+                 | otherwise   = m { mx = M.insert i (vec r) (mx m) }
+
+exchangeRows i j m | i == j    = m
+                   | otherwise = replaceRow (m `row` i) j
+                               $ replaceRow (m `row` j) i m
 
 --------------------------------------------------------------------------------
 -- LOOKUP/UPDATE --
@@ -156,24 +161,26 @@ m `row` i = SV (width m) (findWithDefault M.empty i (mx m))
 
 -- | Returns column of matrix at given index
 col :: (Num α, Eq α) => SparseMatrix α -> Index -> SparseVector α
-m `col` i = (trans m) `row` i
--- TODO: transpositioning whole matrix is not effective
+m `col` i = M.foldlWithKey' addElem (zeroVec (height m)) (mx m)
+    where addElem acc i row = maybe acc (\x -> acc `vecIns` (i,x)) (M.lookup i row)
+-- old, obvious variant: (trans m) `row` i
+-- transpositioning the whole matrix is not effective
 
 -- | Updates values in row using given function
-updRow :: (Num α) => SparseMatrix α -> (SparseVector α -> SparseVector α) -> Index -> SparseMatrix α
-updRow m f i = m { mx = M.adjust f' i (mx m) }
+updRow :: (Num α) => (SparseVector α -> SparseVector α) -> Index -> SparseMatrix α -> SparseMatrix α
+updRow f i m = m { mx = M.adjust f' i (mx m) }
     where f' = vec . f . SV (width m)
 
 -- | Fills row with zeroes (i.e. deletes it, but size of matrix doesn't change)
-eraseRow :: (Num α) => SparseMatrix α -> Index -> SparseMatrix α
-m `eraseRow` i = m { mx = M.delete i (mx m) }
+eraseRow :: (Num α) => Index -> SparseMatrix α -> SparseMatrix α
+eraseRow i m = m { mx = M.delete i (mx m) }
 
 -- | Erases matrix element at given index
 erase :: (Num α) => SparseMatrix α -> (Index,Index) -> SparseMatrix α 
 m `erase` (i,j) = if isZeroVec (m' `row` i)     -- if that was the last element
-                     then m' `eraseRow` i       -- delete this row
+                     then eraseRow i m'         -- delete this row
                      else m'
-    where m' = updRow m (`eraseInVec` j) i
+    where m' = updRow (`eraseInVec` j) i m
 
 -- | Inserts new element to the sparse matrix (replaces old value)
 ins :: (Num α, Eq α) => SparseMatrix α -> ((Index,Index), α) -> SparseMatrix α 
@@ -181,10 +188,12 @@ m `ins` ((i,j),0) = m `erase` (i,j)
 m `ins` ((i,j),x) = m { mx = newMx }
     where newMx = M.insertWith' M.union i (M.singleton j x) (mx m)
 
-findRowIndices :: (SparseVector α -> Bool) -> SparseMatrix α -> [Key]
+-- | Finds indices of rows, that satisfy given predicate. Searches from left to right (in ascending order of indices)
+findRowIndices :: (SparseVector α -> Bool) -> SparseMatrix α -> [Int]
 findRowIndices  p m = fst $ M.mapAccumRWithKey (\acc i x -> (if p (SV (width m) x) then i:acc else acc,x)) [] (mx m)
 
-findRowIndicesR :: (SparseVector α -> Bool) -> SparseMatrix α -> [Key]
+-- | Finds indices of rows, that satisfy given predicate. Searches from right to left (in descending order of indices)
+findRowIndicesR :: (SparseVector α -> Bool) -> SparseMatrix α -> [Int]
 findRowIndicesR p m = fst $ M.mapAccumWithKey  (\acc i x -> (if p (SV (width m) x) then i:acc else acc,x)) [] (mx m)
 
 --------------------------------------------------------------------------------
@@ -199,6 +208,12 @@ diagonalMx :: (Num α, Eq α) => [α] -> SparseMatrix α
 diagonalMx = L.foldl add emptyMx
     where add m x = let i = height m + 1
                     in setSize (i,i) (m `ins` ((i,i),x))
+
+-- | Collects main diagonal of matrix
+mainDiag ::  (Eq α, Num α) => SparseMatrix α -> SparseVector α
+mainDiag m = sparseList [ m#(i,i) | i <- [1 .. l] ]
+    where l = min (height m) (width m)
+
 
 -- | Constructs matrix from a list of rows
 fromRows :: (Num α) => [SparseVector α] -> SparseMatrix α
@@ -250,12 +265,12 @@ column c = let c'       = L.map showNonZero c
 -- TRANSPOSITION --
 -------------------
 
--- | Transposes matrix (rows became columns)
+-- | Transposes matrix (rows become columns)
 trans :: (Num α, Eq α) => SparseMatrix α -> SparseMatrix α
-trans m = let indexes = [ (i,j) | i <- [1 .. height m], j <- [1 .. width m] ]
-              add acc (i,j) = acc `ins` ((j,i), m # (i,j))
-              mt = F.foldl' add emptyMx indexes
-          in mt { dims = (width m, height m) }
+trans m = let mt                  = M.foldlWithKey'  accRow     emptyMx (mx m)
+              accRow    acc i row = M.foldlWithKey' (accElem i) acc      row
+              accElem i acc j x   = acc `ins` ((j,i),x)
+          in setSize (width m, height m) mt
 
 --------------------------------------------------------------------------------
 -- MULTIPLICATIONS --

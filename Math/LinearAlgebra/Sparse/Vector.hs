@@ -14,9 +14,10 @@ import Data.Monoid
 
 -- | Dot product of two `IntMap`s (for internal use)
 (··) :: (Num α) => IntMap α -> IntMap α -> α
-v ·· w = M.foldlWithKey' f 0 v
-    where f acc 0 _ = acc
-          f acc i x = acc + ((findWithDefault 0 i w) * x)
+v ·· w = M.foldl' (+) 0 $ M.intersectionWith (*) v w
+--    M.foldlWithKey' f 0 v
+--    where f acc 0 _ = acc
+--          f acc i x = acc + ((findWithDefault 0 i w) * x)
 
 -- | Shifts (re-enumerates) keys of IntMap by given number
 shiftKeys :: Int -> IntMap α -> IntMap α
@@ -71,6 +72,11 @@ emptyVec = SV 0 M.empty
 -- | Vector of given size with no non-zero values
 zeroVec ::  Int -> SparseVector α
 zeroVec n = setLength n emptyVec
+
+-- | Checks if vector has no non-zero values (i.e. is empty)
+isZeroVec, isNotZeroVec :: SparseVector α -> Bool
+isZeroVec = M.null . vec
+isNotZeroVec = not . isZeroVec
 
 -- | Vector of length 1 with given value
 singVec :: (Eq α, Num α) => α -> SparseVector α
@@ -145,6 +151,9 @@ v ! i = findWithDefault 0 i (vec v)
 eraseInVec :: (Num α) => SparseVector α -> Index -> SparseVector α
 v `eraseInVec` j = v { vec = M.delete j (vec v) }
 
+v `vecIns` (i,0) = v `eraseInVec` i
+v `vecIns` (i,x) = v { vec = M.insert i x (vec v) }
+
 --------------------------------------------------------------------------------
 -- TO/FROM LIST --
 ------------------
@@ -175,10 +184,11 @@ showNonZero x  = if x == 0 then " " else show x
 ---------------------
 
 -- | Dot product of two sparse vectors
-dot :: (Num α) => SparseVector α -> SparseVector α -> α
+dot :: (Eq α, Num α) => SparseVector α -> SparseVector α -> α
 dot = (·)
 
 -- | Unicode alias for `dot`
-(·) :: (Num α) => SparseVector α -> SparseVector α -> α
+(·) :: (Eq α, Num α) => SparseVector α -> SparseVector α -> α
+--v · w = M.foldl' (+) 0 $ vec $ v * w
 (SV n v) · (SV m w) | n < m     = v ·· w  -- uses shorter vector
                     | otherwise = w ·· v
