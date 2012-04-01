@@ -1,6 +1,10 @@
 module Math.LinearAlgebra.Sparse.Algorithms
-( module Math.LinearAlgebra.Sparse.Algorithms.Staircase 
+( 
+-- ** Staircase form
+  module Math.LinearAlgebra.Sparse.Algorithms.Staircase 
+-- ** Diagonal form
 , module Math.LinearAlgebra.Sparse.Algorithms.Diagonal
+-- ** Solving linear systems (in integer domain)
 , module Math.LinearAlgebra.Sparse.Algorithms.SolveLinear
 )
 where

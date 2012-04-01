@@ -1,6 +1,10 @@
 module Math.LinearAlgebra.Sparse
-( module Math.LinearAlgebra.Sparse.Matrix 
-, module Math.LinearAlgebra.Sparse.Vector
+( 
+-- * Sparse vectors
+  module Math.LinearAlgebra.Sparse.Vector
+-- * Sparse matrices
+, module Math.LinearAlgebra.Sparse.Matrix 
+-- * Some algorithms on sparse matrices
 , module Math.LinearAlgebra.Sparse.Algorithms
 )
 where
