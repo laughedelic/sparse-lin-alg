@@ -1,6 +1,42 @@
 module Math.LinearAlgebra.Sparse.Matrix 
--- TODO: explicit export list
+(
+
+-- ** Sparse matrix datatype
+
+SMx, SparseMatrix (..),
+
+-- ** Basic functions
+
+height, width, setSize, emptyMx, zeroMx, isZeroMx, isNotZeroMx , idMx,
+
+-- ** Combining matrices
+
+(//), hconcat, vconcat, sizedBlockMx, sizedBlockSMx, blockMx, blockSMx,
+
+-- ** Adding\/deleting row\/columns
+
+addRow, addCol, addZeroRow, addZeroCol, delRow, delCol, delRowCol, separateMx,
+
+-- ** Lookup\/update
+
+(#), row, col, updRow, eraseRow, erase, ins, findRowIndices, findRowIndicesR, popRow, (|>), (<|), replaceRow, exchangeRows, mapOnRows,
+
+-- ** To\/from list
+
+diagonalMx, mainDiag, fromRows, toAssocList, fromAssocListWithSize, fromAssocList, fillMx, sparseMx,
+
+-- ** Transposition
+
+trans,
+
+-- ** Multiplications
+
+mulMV, (×·) , mulVM, (·×) , mul, (×),
+
+)
 where
+
+import Math.LinearAlgebra.Sparse.IntMapUtilities
 
 import Data.Functor
 import Data.Foldable as F
@@ -27,6 +63,8 @@ data SparseMatrix α = SM
 instance Functor SparseMatrix where
     fmap f m = m {mx = fmap (fmap f) (mx m)}
 
+-- | All `Num` work on sparse matrices the same way as 
+--   on `SparseVector` (see documentation there)
 instance (Eq α, Num α) => Num (SparseMatrix α) where
     (SM (h1,w1) m) + (SM (h2,w2) n) 
         = SM (max h1 h2, max w1 w2) $ M.filter (not . M.null)
@@ -35,9 +73,40 @@ instance (Eq α, Num α) => Num (SparseMatrix α) where
         = SM (max h1 h2, max w1 w2) $ M.filter (not . M.null)
              (intersectionWith (intersectionWith (*)) m n)
     negate         = fmap negate
+    fromInteger 0  = emptyMx
     fromInteger x  = diagonalMx [fromInteger x]
     abs            = fmap abs
     signum         = fmap signum
+
+-- | `mempty` is just `emptyMx`
+--
+--   `mappend` is horisontal concatenation
+instance Monoid (SparseMatrix α) where
+    mempty = emptyMx
+    (SM (h1,w1) m) `mappend` (SM (h2,w2) n) 
+        = SM (max h1 h2, w1 + w2) (M.unionWith M.union m (M.map (shiftKeys w1) n))
+
+-- | Shows size and filled matrix (but without zeroes)
+instance (Show α, Eq α, Num α) => Show (SparseMatrix α) where
+    show = showSparseMatrix . fillMx
+
+showSparseMatrix :: (Show α, Eq α, Num α) => [[α]] -> String
+showSparseMatrix [] = "(0,0):\n[]\n"
+showSparseMatrix m = show (length m, length (head m))++": \n"++
+    (unlines $ L.map (("["++) . (++"]") . intercalate "|") 
+             $ transpose $ L.map column $ transpose m)
+
+column :: (Show α, Eq α, Num α) => [α] -> [String]
+column c = let c'       = L.map showNonZero c
+               width    = L.maximum $ L.map length c'
+               offset x = replicate (width - (length x)) ' ' ++ x
+           in L.map offset c'
+
+showNonZero x  = if x == 0 then " " else show x
+
+--------------------------------------------------------------------------------
+-- BASIC FUNCTIONS --
+---------------------
 
 -- | Matrix real height and width
 height, width :: SparseMatrix α -> Int
@@ -69,8 +138,31 @@ idMx n = diagonalMx (L.replicate n 1)
 -- COMBINING MATRICES --
 ------------------------
 
--- zipElemsWith :: SparseMatrix α -> SparseMatrix β -> SparseMatrix (α,β)
--- zipElemsWith f ma mb = 
+-- | Vertical concatenation
+(//) :: SparseMatrix α -> SparseMatrix α -> SparseMatrix α
+(SM (h1,w1) m) // (SM (h2,w2) n) =
+    SM (h1 + h2, max w1 w2) (m `M.union` (shiftKeys h1 n))
+
+-- | Batch horisontal\/vertical concatenation
+hconcat, vconcat :: [SparseMatrix α] -> SparseMatrix α
+hconcat = L.foldl' (<>) emptyMx
+vconcat = L.foldl' (//) emptyMx
+
+-- | Takes size of each block and matrix of sparse matrices
+--   and constructs sparse matrix from this blocks
+sizedBlockMx :: Num α => (Int, Int) -> [[SparseMatrix α]] -> SparseMatrix α
+sizedBlockMx s = blockMx . fmap (fmap (setSize s))
+
+-- | Fills sparse matrix of blocks and then applies `sizedBlockMx`
+sizedBlockSMx :: (Eq α, Num α) =>(Int, Int) -> SparseMatrix (SparseMatrix α) -> SparseMatrix α
+sizedBlockSMx s = sizedBlockMx s . fillMx
+
+-- TODO: evaluate block sizes automaticaly
+blockMx :: [[SparseMatrix α]] -> SparseMatrix α
+blockMx = vconcat . fmap hconcat
+
+blockSMx :: (Eq α, Num α) => SparseMatrix (SparseMatrix α) -> SparseMatrix α
+blockSMx = blockMx . fillMx
 
 --------------------------------------------------------------------------------
 -- ADDING/DELETING ROW/COLUMNS --
@@ -124,28 +216,12 @@ partitionMx p (SM (h,w) m) = (SM (st,w) t, SM (h-st,w) f)
           st = size t
 -- ^ WARNING: doesn't work with empty rows
 
+-- | Separates matrix, using pedicate on rows and returns two matrices of the same size,
+--   one only with rows satisfying predicate, and another with the rest rows
 separateMx :: (Num α) => (SparseVector α -> Bool) -> SparseMatrix α -> (SparseMatrix α, SparseMatrix α)
 separateMx p (SM (h,w) m) = (SM (h,w) t, SM (h,w) f)
     where (t,f) = M.partition (p . SV w) m
           st = size t
-
--- TODO: more effective implementation (is done in exchangeRows?)
--- moveRow i j m | i == j    = m
---               | otherwise = addRow r j $ delRow i m
---     where r = m `row` i
-
-popRow i m = (m `row` i, delRow i m)
-
-r |> m = addRow r 1 m
-
-m <| r = addRow r (height m + 1) m
-
-replaceRow r i m | isZeroVec r = eraseRow i m
-                 | otherwise   = m { mx = M.insert i (vec r) (mx m) }
-
-exchangeRows i j m | i == j    = m
-                   | otherwise = replaceRow (m `row` i) j
-                               $ replaceRow (m `row` j) i m
 
 --------------------------------------------------------------------------------
 -- LOOKUP/UPDATE --
@@ -161,8 +237,8 @@ m `row` i = SV (width m) (findWithDefault M.empty i (mx m))
 
 -- | Returns column of matrix at given index
 col :: (Num α, Eq α) => SparseMatrix α -> Index -> SparseVector α
-m `col` i = M.foldlWithKey' addElem (zeroVec (height m)) (mx m)
-    where addElem acc i row = maybe acc (\x -> acc `vecIns` (i,x)) (M.lookup i row)
+m `col` j = M.foldlWithKey' addElem (zeroVec (height m)) (mx m)
+    where addElem acc i row = maybe acc (\x -> acc `vecIns` (i,x)) (M.lookup j row)
 -- old, obvious variant: (trans m) `row` i
 -- transpositioning the whole matrix is not effective
 
@@ -196,6 +272,38 @@ findRowIndices  p m = fst $ M.mapAccumRWithKey (\acc i x -> (if p (SV (width m) 
 findRowIndicesR :: (SparseVector α -> Bool) -> SparseMatrix α -> [Int]
 findRowIndicesR p m = fst $ M.mapAccumWithKey  (\acc i x -> (if p (SV (width m) x) then i:acc else acc,x)) [] (mx m)
 
+-- TODO: more effective implementation (is done in exchangeRows?)
+-- moveRow i j m | i == j    = m
+--               | otherwise = addRow r j $ delRow i m
+--     where r = m `row` i
+
+-- | Returns a row at given index and matrix without it
+popRow :: Num α =>Index -> SparseMatrix α -> (SparseVector α, SparseMatrix α)
+popRow i m = (m `row` i, delRow i m)
+
+-- | Adds row to matrix at the top
+(|>) ::  Num α => SparseVector α -> SparseMatrix α -> SparseMatrix α
+r |> m = addRow r 1 m
+
+-- | Adds row to matrix at the bottom
+(<|) ::  Num α => SparseMatrix α -> SparseVector α -> SparseMatrix α
+m <| r = addRow r (height m + 1) m
+
+-- | Replaces row at given index with given vector
+replaceRow :: Num α => SparseVector α -> Index -> SparseMatrix α -> SparseMatrix α
+replaceRow r i m | isZeroVec r = eraseRow i m
+                 | otherwise   = m { mx = M.insert i (vec r) (mx m) }
+
+-- | Exchanges positions of two rows
+exchangeRows :: Num α => Index -> Index -> SparseMatrix α -> SparseMatrix α
+exchangeRows i j m | i == j    = m
+                   | otherwise = replaceRow (m `row` i) j
+                               $ replaceRow (m `row` j) i m
+
+-- | Applies vector-function on matrix rows
+mapOnRows :: (SparseVector α -> SparseVector β)-> SparseMatrix α -> SparseMatrix β
+mapOnRows f m = m { mx = M.map (vec . f . (SV (width m))) (mx m) }
+
 --------------------------------------------------------------------------------
 -- TO/FROM LIST --
 ------------------
@@ -217,7 +325,7 @@ mainDiag m = sparseList [ m#(i,i) | i <- [1 .. l] ]
 
 -- | Constructs matrix from a list of rows
 fromRows :: (Num α) => [SparseVector α] -> SparseMatrix α
-fromRows = L.foldl (\m r -> addRow r (height m + 1) m) emptyMx
+fromRows = L.foldl (<|) emptyMx
 
 -- | Converts sparse matrix to associative list,
 --   adding fake zero element, to save real size for inverse conversion
@@ -226,11 +334,14 @@ toAssocList (SM s m) = (s, 0) :
     [ ((i,j), x) | (i,row) <- M.toAscList m, (j,x) <- M.toAscList row, x /= 0 ] 
 
 -- | Converts associative list to sparse matrix,
+--   of given size
+fromAssocListWithSize :: (Num α, Eq α) => (Int,Int) -> [ ((Index,Index), α) ] -> SparseMatrix α 
+fromAssocListWithSize s l = L.foldl' ins (zeroMx s) l 
+
+-- | Converts associative list to sparse matrix,
 --   using maximal index as matrix size
 fromAssocList :: (Num α, Eq α) => [ ((Index,Index), α) ] -> SparseMatrix α 
-fromAssocList l = let size = L.maximum $ fmap fst l
-                      m    = L.foldl ins emptyMx l
-                  in m { dims = size }
+fromAssocList l = fromAssocListWithSize (L.maximum $ fmap fst l) l
 
 -- | Converts sparse matrix to plain list-matrix with all zeroes restored
 fillMx :: (Num α) => SparseMatrix α -> [[α]]
@@ -243,23 +354,6 @@ sparseMx [] = emptyMx
 sparseMx m@(r:_) = SM (length m, length r) $ M.fromList
     [ (i,row) | (i,row) <- zipWith pair [1..] m, not (M.null row) ]
     where pair i r = (i, vec (sparseList r))
-
--- | Shows size and filled matrix (but without zeroes)
-instance (Show α, Eq α, Num α) => Show (SparseMatrix α) where
-    show = showSparseMatrix . fillMx
-    -- show (dims m) ++ show (mx m) -- 
-
-showSparseMatrix :: (Show α, Eq α, Num α) => [[α]] -> String
-showSparseMatrix [] = "[]"
-showSparseMatrix m = show (length m, length (head m))++": \n"++
-    (unlines $ L.map (("["++) . (++"]") . intercalate "|") 
-             $ transpose $ L.map column $ transpose m)
-
-column :: (Show α, Eq α, Num α) => [α] -> [String]
-column c = let c'       = L.map showNonZero c
-               width    = L.maximum $ L.map length c'
-               offset x = replicate (width - (length x)) ' ' ++ x
-           in L.map offset c'
 
 --------------------------------------------------------------------------------
 -- TRANSPOSITION --
