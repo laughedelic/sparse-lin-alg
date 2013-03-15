@@ -66,6 +66,10 @@ instance (Arbitrary α, Eq α, Ord α, Num α) => Arbitrary (SparseVector α) wh
 genSparseList :: (Arbitrary α, Num α) => Int -> Gen [α]
 genSparseList n = vectorOf n $ frequency [(4, return 0), (1, arbitrary)]
 
+genVecAssocList :: (Arbitrary α, Ord α, Eq α, Num α) => Int -> Int -> Gen [ (Index, α) ]
+genVecAssocList n s = liftM ( ((s,0):) . nubBy ((==) `on` fst) ) $
+    vectorOf n $ genPair (genIndex (1,s)) genNonZero
+
 --------------------------------------------------------------------------------
 -- SPARSE MATRIX DATATYPE --
 ----------------------------

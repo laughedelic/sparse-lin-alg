@@ -23,7 +23,7 @@ unionVecsWith, intersectVecsWith,
 
 -- ** To/from list
 
-fillVec, sparseList,
+fillVec, sparseList, vecToAssocList, vecFromAssocListWithSize, vecFromAssocList,
 
 -- ** Multiplications
 
@@ -193,6 +193,21 @@ fillVec v = [ v ! i | i <- [1 .. dim v] ]
 -- | Converts plain list to sparse vector, throwing out all zeroes
 sparseList :: (Num α, Eq α) => [α] -> SparseVector α
 sparseList l = SV (length l) $ M.fromList [ (i,x) | (i,x) <- zip [1..] l, x /= 0 ]
+
+-- | Converts sparse vector to an associative list,
+--   adding fake zero element, to save real size for inverse conversion
+vecToAssocList :: (Num α, Eq α) => SparseVector α -> [ (Index, α) ]
+vecToAssocList v = (dim v, 0) : (M.toAscList (vec v))
+
+-- | Converts associative list to sparse vector,
+--   of given size
+vecFromAssocListWithSize :: (Num α, Eq α) => Int -> [ (Index, α) ] -> SparseVector α 
+vecFromAssocListWithSize s l = L.foldl' vecIns (zeroVec s) l 
+
+-- | Converts associative list to sparse vector,
+--   using maximal index as it's size
+vecFromAssocList :: (Num α, Eq α) => [ (Index, α) ] -> SparseVector α 
+vecFromAssocList l = vecFromAssocListWithSize (L.maximum $ fmap fst l) l
 
 --------------------------------------------------------------------------------
 -- MULTIPLICATIONS --
