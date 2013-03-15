@@ -49,7 +49,7 @@ testgr_to_from_list = testGroup "TO/FROM LIST"
     [ testProperty "fillMx   . sparseMx == id" prop_fill_sparse_mx
     , testProperty "sparseMx . fillMx   == id" prop_sparse_fill_mx
     , testProperty "toAssocList   . fromAssocList == id" prop_to_from_AssocList
-    , testProperty "fromAssocList . toAssocList   == id" prop_to_from_AssocList
+    , testProperty "fromAssocList . toAssocList   == id" prop_from_to_AssocList
     ]
 
 prop_sparse_fill_mx =
