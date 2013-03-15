@@ -1,5 +1,5 @@
 Name:                sparse-lin-alg
-Version:             0.4.1
+Version:             0.4.2
 Synopsis:            Effective linear algebra on sparse matrices
 Description:         Sparse matrices and vectors are represented using IntMaps, which store non-zero values. This library provides some useful functions for computations on them. Also some linear algebra algorithms are included. At the moment, they work only on integer domain.
 Homepage:            http://github.com/laughedelic/sparse-lin-alg

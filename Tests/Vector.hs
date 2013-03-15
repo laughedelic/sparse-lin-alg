@@ -34,6 +34,8 @@ testgr_lookup_update = testGroup "LOOKUP/UPDATE"
 testgr_to_from_list = testGroup "TO/FROM LIST"
     [ testProperty "fillVec . sparseList == id" prop_sparse_fill_vec
     , testProperty "sparseList . fillVec == id" prop_fill_sparse_vec
+    , testProperty "vecToAssocList   . vecFromAssocList == id" prop_vec_to_from_AssocList
+    , testProperty "vecFromAssocList . vecToAssocList   == id" prop_vec_from_to_AssocList
     ]
 
 
@@ -44,6 +46,16 @@ prop_fill_sparse_vec =
 prop_sparse_fill_vec = 
     forAll (genSize (0,1000) >>= genSparseList :: Gen [Integer]) 
     $ \l -> fillVec (sparseList l) == l
+
+prop_vec_to_from_AssocList =
+    forAll (genSize (0,1000)) $ \s ->
+    forAll (choose (0,s)) $ \n ->
+    forAll (genVecAssocList n s :: Gen [(Index,Integer)]) $ \l ->
+        sort (vecToAssocList (vecFromAssocList l)) == sort l
+
+prop_vec_from_to_AssocList =
+    forAll (genSize (0,1000) >>= genSparseVector :: Gen (SparseVector Integer))
+    $ \v -> vecFromAssocList (vecToAssocList v) == v
 
 --------------------------------------------------------------------------------
 -- DOT PRODUCT --
