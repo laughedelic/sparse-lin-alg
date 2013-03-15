@@ -40,7 +40,7 @@ solveDiag dd a = M.mapEitherWithKey solveOne (vec a)
 --   for given left-side matrix and right-side vector
 solveLinear :: Integral α =>SparseMatrix α -> SparseVector α -> Maybe (SparseVector α)
 solveLinear m b = case solveDiagonal (toDiag m) b of
-                       Left _ -> Nothing
+                       Left msg -> error msg
                        Right s -> Just s
 
 --  Solves a system in form:
@@ -64,3 +64,7 @@ solveLinSystems m bs = if ok then Just (SV (dim bs) sols) else Nothing
           solve ok b = case solveLinear m b of
                             Nothing -> (False, emptyVec)
                             Just s  -> (ok, s)
+--solveLinSystems m bs = if Nothing `elem` sols 
+--                          then error "system is not solvable"
+--                          else catMaybes sols
+--    where sols = fmap (solveLinear m) bs

@@ -20,6 +20,7 @@ addRow, addCol, addZeroRow, addZeroCol, delRow, delCol, delRowCol, separateMx,
 -- ** Lookup\/update
 
 (#), row, col, updRow, eraseRow, erase, ins, findRowIndices, findRowIndicesR, popRow, (|>), (<|), replaceRow, exchangeRows, mapOnRows,
+rows, columns,
 
 -- ** To\/from list
 
@@ -165,7 +166,7 @@ blockSMx :: (Eq α, Num α) => SparseMatrix (SparseMatrix α) -> SparseMatrix α
 blockSMx = blockMx . fillMx
 
 --------------------------------------------------------------------------------
--- ADDING/DELETING ROW/COLUMNS --
+-- ADDING\/DELETING ROW\/COLUMNS --
 ---------------------------------
 
 -- | Adds row at given index, increasing matrix height by 1 
@@ -304,6 +305,14 @@ exchangeRows i j m | i == j    = m
 mapOnRows :: (SparseVector α -> SparseVector β)-> SparseMatrix α -> SparseMatrix β
 mapOnRows f m = m { mx = M.map (vec . f . (SV (width m))) (mx m) }
 
+-- | Returns vector with matrix rows
+rows :: SparseMatrix α -> SparseVector (SparseVector α)
+rows (SM (h,w) m) = SV h (M.map (SV w) m)
+
+-- | Returns vector with matrix columns (@rows . trans@)
+columns :: (Eq α, Num α) => SparseMatrix α -> SparseVector (SparseVector α)
+columns = rows . trans
+
 --------------------------------------------------------------------------------
 -- TO/FROM LIST --
 ------------------
@@ -323,9 +332,9 @@ mainDiag m = sparseList [ m#(i,i) | i <- [1 .. l] ]
     where l = min (height m) (width m)
 
 
--- | Constructs matrix from a list of rows
-fromRows :: (Num α) => [SparseVector α] -> SparseMatrix α
-fromRows = L.foldl (<|) emptyMx
+-- | Constructs matrix from a set (list/vector/etc.) of rows
+fromRows :: (Num α, Foldable φ) => φ (SparseVector α) -> SparseMatrix α
+fromRows = F.foldl' (<|) emptyMx
 
 -- | Converts sparse matrix to associative list,
 --   adding fake zero element, to save real size for inverse conversion

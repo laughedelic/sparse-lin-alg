@@ -18,7 +18,7 @@ import Tests.Generators
 testgr_algorithms = testGroup "ALGORITHMS TESTS"
     [ testProperty "Staircase form" prop_staircase
     , testProperty "Diagonal form"  prop_diagonal
-    , testProperty "Linear system solution" prop_solve
+    --, testProperty "Linear system solution" prop_solve
     ]
 
 --------------------------------------------------------------------------------
@@ -49,3 +49,8 @@ prop_solve =
            case x of
                 Nothing -> True
                 Just x' -> m ×· x' == b
+    --forAll (genSparseVector  5    :: Gen (SparseVector Integer)) $ \x ->
+    --    let b = m ×· x
+    --        x' = solveLinear m b
+    --    in collect (m,x,b) $
+    --        Just x == solveLinear m b
