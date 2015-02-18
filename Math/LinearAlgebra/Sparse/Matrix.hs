@@ -384,7 +384,7 @@ mulMV :: (Num α, Eq α) => SparseMatrix α -> SparseVector α -> SparseVector �
 mulMV = (×·)
 -- | Unicode alias for `mulMV`
 (×·)  :: (Num α, Eq α) => SparseMatrix α -> SparseVector α -> SparseVector α
-(SM (h,_) m) ×· (SV _ v) = SV h (M.mapMaybe (v··) m)  -- dot-p v with each row
+(SM (h,_) m) ×· (SV _ v) = SV h (M.mapMaybe (v ··) m)  -- dot-p v with each row
 
 -- | Vector-by-matrix multiplication
 mulVM :: (Num α, Eq α) => SparseVector α -> SparseMatrix α -> SparseVector α
@@ -400,7 +400,6 @@ mul = (×)
 (×) :: (Num α, Eq α) => SparseMatrix α -> SparseMatrix α -> SparseMatrix α
 a × b = let d  = (height a, width b)    -- size of result
             bt = mx (trans b)           -- columns of b
-            m  = M.filter (not . M.null)
-               $ M.map (\aRow -> M.mapMaybe (aRow··) bt) (mx a)
+            m  = M.mapMaybe (\aRow -> (aRow ···) bt) (mx a)
             -- each row of a should be dot-multiplied on b columns
         in SM d m
