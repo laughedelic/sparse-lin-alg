@@ -11,10 +11,9 @@ import Data.IntMap   as M
 
 -- | Dot product of two `IntMap`s (for internal use)
 (··) :: (Num α, Eq α) => IntMap α -> IntMap α -> Maybe α
-v ·· w = let x = M.foldl' (+) 0 $ M.intersectionWith (*) v w
-  in case x of
-           0 -> Nothing
-           _ -> Just x
+v ·· w = case M.foldl' (+) 0 $ M.intersectionWith (*) v w of
+  0 -> Nothing
+  x -> Just x
 --    M.foldlWithKey' f 0 v
 --    where f acc 0 _ = acc
 --          f acc i x = acc + ((findWithDefault 0 i w) * x)
