@@ -1,4 +1,4 @@
-module Math.LinearAlgebra.Sparse.Matrix 
+module Math.LinearAlgebra.Sparse.Matrix
 (
 
 -- ** Sparse matrix datatype
@@ -54,8 +54,8 @@ import Math.LinearAlgebra.Sparse.Vector
 -- | Internal storage of matrix
 type SMx  α = SVec (SVec α)
 
--- | Sparse matrix is indexed map of non-zero rows, 
-data SparseMatrix α = SM 
+-- | Sparse matrix is indexed map of non-zero rows,
+data SparseMatrix α = SM
      { dims :: (Int,Int) -- ^ real height and width of filled matrix
      , mx   :: SMx α     -- ^ IntMap (IntMap α) representing non-zero values
      } deriving Eq
@@ -64,7 +64,7 @@ data SparseMatrix α = SM
 instance Functor SparseMatrix where
     fmap f m = m {mx = fmap (fmap f) (mx m)}
 
--- | All `Num` work on sparse matrices the same way as 
+-- | All `Num` work on sparse matrices the same way as
 --   on `SparseVector` (see documentation there)
 instance (Eq α, Num α) => Num (SparseMatrix α) where
     (SM (h1,w1) m) + (SM (h2,w2) n) 
@@ -84,7 +84,7 @@ instance (Eq α, Num α) => Num (SparseMatrix α) where
 --   `mappend` is horisontal concatenation
 instance Monoid (SparseMatrix α) where
     mempty = emptyMx
-    (SM (h1,w1) m) `mappend` (SM (h2,w2) n) 
+    (SM (h1,w1) m) `mappend` (SM (h2,w2) n)
         = SM (max h1 h2, w1 + w2) (M.unionWith M.union m (M.map (shiftKeys w1) n))
 
 -- | Shows size and filled matrix (but without zeroes)
@@ -94,7 +94,7 @@ instance (Show α, Eq α, Num α) => Show (SparseMatrix α) where
 showSparseMatrix :: (Show α, Eq α, Num α) => [[α]] -> String
 showSparseMatrix [] = "(0,0):\n[]\n"
 showSparseMatrix m = show (length m, length (head m))++": \n"++
-    (unlines $ L.map (("["++) . (++"]") . intercalate "|") 
+    (unlines $ L.map (("["++) . (++"]") . intercalate "|")
              $ transpose $ L.map column $ transpose m)
 
 column :: (Show α, Eq α, Num α) => [α] -> [String]
@@ -169,14 +169,14 @@ blockSMx = blockMx . fillMx
 -- ADDING\/DELETING ROW\/COLUMNS --
 ---------------------------------
 
--- | Adds row at given index, increasing matrix height by 1 
+-- | Adds row at given index, increasing matrix height by 1
 --   and shifting indexes after it
 addRow :: (Num α) => SparseVector α -> Index -> SparseMatrix α -> SparseMatrix α
 addRow v i m = SM (height m + 1, max (width m) (dim v))
                   (addElem mbv i (mx m))
     where mbv = if isZeroVec v then Nothing else Just (vec v)
 
--- | Adds column at given index, increasing matrix width by 1 
+-- | Adds column at given index, increasing matrix width by 1
 --   and shifting indexes after it
 addCol :: (Num α) => SparseVector α -> Index -> SparseMatrix α -> SparseMatrix α
 addCol v j m = SM (max (height m) (dim v), width m + 1)
@@ -191,14 +191,14 @@ addZeroRow i m = addRow (zeroVec (width m)) i m
 addZeroCol ::  Num α => Index -> SparseMatrix α -> SparseMatrix α
 addZeroCol i m = addCol (zeroVec (height m)) i m
 
--- | Deletes row at given index, decreasing matrix height by 1 
+-- | Deletes row at given index, decreasing matrix height by 1
 --   and shifting indexes after it
 delRow :: (Num α) => Index -> SparseMatrix α -> SparseMatrix α
 delRow i m | isZeroMx m = setSize (height m - 1, width m) m
            | otherwise  = SM (height m - 1, width m)
                              (delElem i (mx m))
 
--- | Deletes column at given index, decreasing matrix width by 1 
+-- | Deletes column at given index, decreasing matrix width by 1
 --   and shifting indexes after it
 delCol :: (Num α) => Index -> SparseMatrix α -> SparseMatrix α
 delCol j m | isZeroMx m = setSize (height m, width m - 1) m
@@ -253,14 +253,14 @@ eraseRow :: (Num α) => Index -> SparseMatrix α -> SparseMatrix α
 eraseRow i m = m { mx = M.delete i (mx m) }
 
 -- | Erases matrix element at given index
-erase :: (Num α) => SparseMatrix α -> (Index,Index) -> SparseMatrix α 
+erase :: (Num α) => SparseMatrix α -> (Index,Index) -> SparseMatrix α
 m `erase` (i,j) = if isZeroVec (m' `row` i)     -- if that was the last element
                      then eraseRow i m'         -- delete this row
                      else m'
     where m' = updRow (`eraseInVec` j) i m
 
 -- | Inserts new element to the sparse matrix (replaces old value)
-ins :: (Num α, Eq α) => SparseMatrix α -> ((Index,Index), α) -> SparseMatrix α 
+ins :: (Num α, Eq α) => SparseMatrix α -> ((Index,Index), α) -> SparseMatrix α
 m `ins` ((i,j),0) = m `erase` (i,j)
 m `ins` ((i,j),x) = m { mx = newMx }
     where newMx = M.insertWith' M.union i (M.singleton j x) (mx m)
@@ -339,23 +339,25 @@ fromRows = F.foldl' (<|) emptyMx
 -- | Converts sparse matrix to associative list,
 --   adding fake zero element, to save real size for inverse conversion
 toAssocList :: (Num α, Eq α) => SparseMatrix α -> [ ((Index,Index), α) ]
-toAssocList (SM s m) = (s, 0) : 
-    [ ((i,j), x) | (i,row) <- M.toAscList m, (j,x) <- M.toAscList row, x /= 0 ] 
+toAssocList (SM s m) = (s, 0) :
+    [ ((i,j), x) | (i,row) <- M.toAscList m, (j,x) <- M.toAscList row, x /= 0 ]
 
 -- | Converts associative list to sparse matrix,
 --   of given size
-fromAssocListWithSize :: (Num α, Eq α) => (Int,Int) -> [ ((Index,Index), α) ] -> SparseMatrix α 
-fromAssocListWithSize s l = L.foldl' ins (zeroMx s) l 
+fromAssocListWithSize :: (Num α, Eq α) => (Int,Int) -> [ ((Index,Index), α) ] -> SparseMatrix α
+fromAssocListWithSize s l = L.foldl' ins (zeroMx s) l
 
 -- | Converts associative list to sparse matrix,
 --   using maximal index as matrix size
-fromAssocList :: (Num α, Eq α) => [ ((Index,Index), α) ] -> SparseMatrix α 
-fromAssocList l = fromAssocListWithSize (L.maximum $ fmap fst l) l
+fromAssocList :: (Num α, Eq α) => [ ((Index,Index), α) ] -> SparseMatrix α
+fromAssocList l = fromAssocListWithSize size l
+    where size = L.foldl maxIndices (0, 0) l
+          maxIndices (mX, mY) ((x, y), _) = (max mX x, max mY y)
 
 -- | Converts sparse matrix to plain list-matrix with all zeroes restored
 fillMx :: (Num α) => SparseMatrix α -> [[α]]
-fillMx m = [ [ m # (i,j) | j <- [1 .. width  m] ]
-                         | i <- [1 .. height m] ]
+fillMx m = [ [ m # (i,j) | j <- [0 .. width  m] ]
+                         | i <- [0 .. height m] ]
 
 -- | Converts plain list-matrix to sparse matrix, throwing out all zeroes
 sparseMx :: (Num α, Eq α) => [[α]] -> SparseMatrix α

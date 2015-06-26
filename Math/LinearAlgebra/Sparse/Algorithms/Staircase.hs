@@ -1,4 +1,4 @@
-module Math.LinearAlgebra.Sparse.Algorithms.Staircase 
+module Math.LinearAlgebra.Sparse.Algorithms.Staircase
 (
 staircase', staircase, extGCD
 )
@@ -6,7 +6,7 @@ where
 
 import Data.Monoid
 
-import Math.LinearAlgebra.Sparse.Matrix 
+import Math.LinearAlgebra.Sparse.Matrix
 import Math.LinearAlgebra.Sparse.Vector
 
 {-
@@ -107,10 +107,10 @@ staircase m = staircase' m (idMx (height m))
 --   Method:
 --   Gauss method applied to the rows of matrix. Though α may be not
 --   a field, we repeat the remainder division to obtain zeroes down
---   in the column. 
+--   in the column.
 --
 staircase' :: Integral a =>SparseMatrix a-> SparseMatrix a -> (SparseMatrix a, SparseMatrix a)
-staircase' mM mT | height mM 
+staircase' mM mT | height mM
                  /= height mT = error "height(mM) /= height(mT)"
                  | otherwise = sc 1 1 mM mT
     where                                  -- sc m t --> (m1,t1),
@@ -125,7 +125,7 @@ staircase' mM mT | height mM
                     else sc (ci+1) (cj+1) m t
 
 -- | Fills column with zeroes
-clearColumn :: Integral t 
+clearColumn :: Integral t
             => Index                            -- ^ row index (clears column beneath this row)
             -> Index                            -- ^ column index
             -> SparseMatrix t                   -- ^ matrix itself
@@ -157,7 +157,7 @@ clearColumn ci cj m t = cc (ks m) m t
         cc _ m t = (m, t)
 
 -- | Extended Euclid algorithm
---   
+--
 -- @extGCD a b@ returns @(x,y)@, such that 
 --
 -- @x · (a \<\> b) == gcd a b@

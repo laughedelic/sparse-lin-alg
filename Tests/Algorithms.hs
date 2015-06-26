@@ -31,14 +31,14 @@ prop_staircase =
     forAll (genSparseMatrix (h,w) :: Gen (SparseMatrix Integer)) $ \m ->
         let (s,t) = staircase m
             -- (sz,en) = (size (mx m), L.sum [ size r | r <- elems (mx m) ])
-        in  -- collect (sz,en,show (en `div` 100)++"%") $ -- (h,w) $ 
+        in  -- collect (sz,en,show (en `div` 100)++"%") $ -- (h,w) $
             t × m == s
 
 prop_diagonal =
     forAll (genSparseMatrix (30,50) :: Gen (SparseMatrix Integer)) $ \m ->
         let (d,t,u) = toDiag m
             (sz,en) = (size (mx m), L.sum [ size r | r <- elems (mx m) ])
-        in  -- collect (sz,en,show (en `div` 100)++"%") $ -- (h,w) $ 
+        in  -- collect (sz,en,show (en `div` 100)++"%") $ -- (h,w) $
             t × m × (trans u) == d
 
 prop_solve =
