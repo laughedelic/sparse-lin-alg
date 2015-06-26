@@ -349,8 +349,11 @@ fromAssocListWithSize s l = L.foldl' ins (zeroMx s) l
 
 -- | Converts associative list to sparse matrix,
 --   using maximal index as matrix size
-fromAssocList :: (Num α, Eq α) => [ ((Index,Index), α) ] -> SparseMatrix α 
-fromAssocList l = fromAssocListWithSize (L.maximum $ fmap fst l) l
+fromAssocList :: (Num α, Eq α) => [ ((Index,Index), α) ] -> SparseMatrix α
+fromAssocList l = fromAssocListWithSize (size is) l
+    where is = fmap fst l
+          size [] = (0, 0)
+          size xs = (L.maximum $ fmap fst is, L.maximum $ fmap snd is)
 
 -- | Converts sparse matrix to plain list-matrix with all zeroes restored
 fillMx :: (Num α) => SparseMatrix α -> [[α]]
