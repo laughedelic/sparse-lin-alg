@@ -201,12 +201,12 @@ vecToAssocList v = (dim v, 0) : (M.toAscList (vec v))
 
 -- | Converts associative list to sparse vector,
 --   of given size
-vecFromAssocListWithSize :: (Num α, Eq α) => Int -> [ (Index, α) ] -> SparseVector α 
-vecFromAssocListWithSize s l = L.foldl' vecIns (zeroVec s) l 
+vecFromAssocListWithSize :: (Num α, Eq α) => Int -> [ (Index, α) ] -> SparseVector α
+vecFromAssocListWithSize s l = L.foldl' vecIns (zeroVec s) l
 
 -- | Converts associative list to sparse vector,
 --   using maximal index as it's size
-vecFromAssocList :: (Num α, Eq α) => [ (Index, α) ] -> SparseVector α 
+vecFromAssocList :: (Num α, Eq α) => [ (Index, α) ] -> SparseVector α
 vecFromAssocList l = vecFromAssocListWithSize (L.maximum $ fmap fst l) l
 
 --------------------------------------------------------------------------------

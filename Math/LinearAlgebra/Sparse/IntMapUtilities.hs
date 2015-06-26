@@ -36,7 +36,7 @@ delElem i m = a `M.union` (shiftKeys (-1) b)
 --
 -- >>> partitionMap (>0) (fromList [(1,1),(2,-1),(3,-2),(4,3),(5,-4)])
 -- ( fromList [(1,1),(4,3)], fromList [(1,-1),(2,-2),(3,-4)] )
--- 
+--
 partitionMap :: (α -> Bool) -> IntMap α -> (IntMap α, IntMap α)
 partitionMap p m = (m', f')
     where f  = M.filter (not . p) m

@@ -1,5 +1,5 @@
 module Math.LinearAlgebra.Sparse.Algorithms.Diagonal
-( 
+(
 isDiag, toDiag
 )
 where
@@ -7,9 +7,9 @@ where
 import Data.Monoid
 import Data.IntMap   as M hiding ((!))
 
-import Math.LinearAlgebra.Sparse.Matrix 
+import Math.LinearAlgebra.Sparse.Matrix
 import Math.LinearAlgebra.Sparse.Vector
-import Math.LinearAlgebra.Sparse.Algorithms.Staircase 
+import Math.LinearAlgebra.Sparse.Algorithms.Staircase
 
 -- | Checks if matrix has diagonal form
 isDiag :: SparseMatrix α -> Bool
