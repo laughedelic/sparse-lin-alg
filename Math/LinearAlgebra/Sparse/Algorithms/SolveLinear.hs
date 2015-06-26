@@ -1,20 +1,20 @@
 module Math.LinearAlgebra.Sparse.Algorithms.SolveLinear
-( 
+(
 solveLinear, solveLinSystems
-) 
+)
 where
 
 import Data.Maybe
 import Data.Monoid
 import Data.IntMap   as M hiding ((!))
 
-import Math.LinearAlgebra.Sparse.Matrix 
+import Math.LinearAlgebra.Sparse.Matrix
 import Math.LinearAlgebra.Sparse.Vector
-import Math.LinearAlgebra.Sparse.Algorithms.Staircase 
+import Math.LinearAlgebra.Sparse.Algorithms.Staircase
 import Math.LinearAlgebra.Sparse.Algorithms.Diagonal
 
 -- | Solves system for matrix in diagonal form
-solveDiagonal :: Integral α 
+solveDiagonal :: Integral α
               => (SparseMatrix α, SparseMatrix α, SparseMatrix α)   -- ^ return triple-value of `toDiag`
               -> SparseVector α                                     -- ^ right-hand-side vector
               -> Either String (SparseVector α)                     -- ^ either error message or solution
@@ -33,10 +33,10 @@ solveDiag :: Integral α => SparseVector α -> SparseVector α -> (IntMap Index,
 solveDiag dd a = M.mapEitherWithKey solveOne (vec a)
     where solveOne i r = let l = dd!i
                              (x,e) = r `divMod` l
-                         in if (l == 0 && r /= 0) || e /= 0 
+                         in if (l == 0 && r /= 0) || e /= 0
                                then Left i else Right x
 
--- | Just solves system of linear equations in matrix form 
+-- | Just solves system of linear equations in matrix form
 --   for given left-side matrix and right-side vector
 solveLinear :: Integral α =>SparseMatrix α -> SparseVector α -> Maybe (SparseVector α)
 solveLinear m b = case solveDiagonal (toDiag m) b of
@@ -55,7 +55,7 @@ solveLinear m b = case solveDiagonal (toDiag m) b of
 --
 
 -- | Solves a set of systems for given left-side matrix and each right-side vector of given set (sparse vector)
-solveLinSystems :: Integral α 
+solveLinSystems :: Integral α
                 => SparseMatrix α                        -- ^ left-side matrix
                 -> SparseVector (SparseVector α)         -- ^ right-side vectors
                 -> Maybe (SparseVector (SparseVector α)) -- ^ if one of systems has no solution `Nothing` is returned
@@ -64,7 +64,7 @@ solveLinSystems m bs = if ok then Just (SV (dim bs) sols) else Nothing
           solve ok b = case solveLinear m b of
                             Nothing -> (False, emptyVec)
                             Just s  -> (ok, s)
---solveLinSystems m bs = if Nothing `elem` sols 
+--solveLinSystems m bs = if Nothing `elem` sols
 --                          then error "system is not solvable"
 --                          else catMaybes sols
 --    where sols = fmap (solveLinear m) bs

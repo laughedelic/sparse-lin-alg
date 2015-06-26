@@ -31,11 +31,11 @@ testgr_lookup_update = testGroup "LOOKUP/UPDATE"
 
 
 -- Test for `ins`, `(#)` and `erase`
-prop_ins = 
+prop_ins =
     forAll (genPair (genSize (0,300)) (genSize (1,400))) $ \(h,w) ->
     forAll (genSparseMatrix (h,w))                       $ \m ->
     forAll (genPair (genIndex (1,h))   (genIndex (1,w))) $ \(i,j) ->
-    forAll (arbitrary :: Gen Int)                        $ \x -> 
+    forAll (arbitrary :: Gen Int)                        $ \x ->
     -- collect (h,w) $
         let m' = m `ins` ((i,j),x)
         in  m' # (i,j) == x
@@ -57,7 +57,7 @@ prop_sparse_fill_mx =
     forAll (genSparseMatrix (h,w) :: Gen (SparseMatrix Integer)) $ \m ->
         sparseMx (fillMx m) == m
 
-prop_fill_sparse_mx = 
+prop_fill_sparse_mx =
     forAll (genPair (genSize (1,100)) (genSize (1,150))) $ \(h,w) ->
     forAll (vectorOf h (genSparseList w) :: Gen [[Integer]]) $ \m ->
         fillMx (sparseMx m) == m
@@ -100,14 +100,14 @@ testgr_muls = testGroup "MULTIPLICATIONS"
 dotL :: (Num α) => [α] -> [α] -> α
 dotL x y = L.sum $ zipWith (*) x y
 
-prop_mulMV = 
+prop_mulMV =
     forAll (genSize (1,100)) $ \h ->
     forAll (genSize (1,200)) $ \w ->
     forAll (genSparseMatrix (h,w) :: Gen (SparseMatrix Integer)) $ \m ->
     forAll (genSparseVector  h    :: Gen (SparseVector Integer)) $ \v ->
         fillVec (m ×· v) == [ row `dotL` fillVec v | row <- fillMx m ]
 
-prop_mulVM = 
+prop_mulVM =
     forAll (genSize (1,100)) $ \h ->
     forAll (genSize (1,200)) $ \w ->
     forAll (genSparseVector  h    :: Gen (SparseVector Integer)) $ \v ->
@@ -117,7 +117,7 @@ prop_mulVM =
 mm :: (Num α) => [[α]] -> [[α]] -> [[α]]
 a `mm` b = [ [ row `dotL` col | col <- transpose b ] | row <- a ]
 
-prop_mul = 
+prop_mul =
     forAll (genSize (1,100)) $ \h ->
     forAll (genSize (1,150)) $ \n ->
     forAll (genSize (1,130)) $ \w ->

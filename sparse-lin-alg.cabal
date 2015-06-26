@@ -24,7 +24,7 @@ Library
                       ,Math.LinearAlgebra.Sparse.Matrix
 
                       ,Math.LinearAlgebra.Sparse.Algorithms
-                      ,Math.LinearAlgebra.Sparse.Algorithms.Staircase 
+                      ,Math.LinearAlgebra.Sparse.Algorithms.Staircase
                       ,Math.LinearAlgebra.Sparse.Algorithms.Diagonal
                       ,Math.LinearAlgebra.Sparse.Algorithms.SolveLinear
 

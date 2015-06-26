@@ -1,4 +1,4 @@
-module Math.LinearAlgebra.Sparse.Algorithms.Staircase 
+module Math.LinearAlgebra.Sparse.Algorithms.Staircase
 (
 staircase', staircase, extGCD
 )
@@ -6,7 +6,7 @@ where
 
 import Data.Monoid
 
-import Math.LinearAlgebra.Sparse.Matrix 
+import Math.LinearAlgebra.Sparse.Matrix
 import Math.LinearAlgebra.Sparse.Vector
 
 {-
@@ -15,7 +15,7 @@ import Math.LinearAlgebra.Sparse.Vector
 --   Method:
 --   Gauss method applied to the rows of matrix. Though α may be not
 --   a field, we repeat the remainder division to obtain zeroes down
---   in the column. 
+--   in the column.
 staircase :: (Num α, Integral α) => SparseMatrix α -> SparseMatrix α
 staircase m | height m <= 1 = m  -- m is either zero matrix or one-row
             | otherwise    =     -- Main loop. m is non-zero.
@@ -34,7 +34,7 @@ staircase m | height m <= 1 = m  -- m is either zero matrix or one-row
                      $ staircase         -- ↑ apply recursion              |
                      $ delRowCol 1 1 m'  -- ↑ so, we take smaller matrix <—'
 
--- | clearColumn m --> m'  
+-- | clearColumn m --> m'
 --   From the start, length(m) > 1.
 --   m'(1,1) = gcd(firstColumn(m)), m'(i,1)==0  for i>1.
 --   m'(1,1) = 0 means that column was zero.
@@ -42,9 +42,9 @@ clearColumn :: (Num α, Integral α) => SparseMatrix α -> SparseMatrix α
 clearColumn m = c nz rest
     where (nz, rest) = partitionMx (\r -> r!1 /= 0) m
 
-          -- Each ai = nz # (i,1) is non-zero,  
+          -- Each ai = nz # (i,1) is non-zero,
           -- The subcolumn (a1,a2) reduces to the form (a,0) by
-          -- the Euclidean gcd algorithm, and the transformation  
+          -- the Euclidean gcd algorithm, and the transformation
           -- 2x2 matrix tt is accumulated, then it is applied to
           -- nz' without 1st column and nz(2) moves to
           -- rest. This continues while (heigth nz) > 1.
@@ -60,8 +60,8 @@ clearColumn m = c nz rest
                 in c (addRow (a.>r1') 1 nz')
                      (addRow (0.>r2') 1 rest)
 
--- | extGCD a b --> (gcd(a,b), tt)  
---   a,b are divided repeatedly with remainder, like in 
+-- | extGCD a b --> (gcd(a,b), tt)
+--   a,b are divided repeatedly with remainder, like in
 --   extended gcd method. tt is a protocol 2x2 matrix
 --   so, [a,b] ·× tt = [gcd(a,b),0]
 extGCD :: (Num α, Integral α) => α -> α -> (α, SparseMatrix α)
@@ -69,7 +69,7 @@ extGCD a b = egcd a b (idMx 2)
     where egcd a b tt =
             let (q,r) = divMod b a  -- quotRem ???
                 (row1, row2) = (tt `row` 1, tt `row` 2)
-                row2' = if q == 0 then row2 
+                row2' = if q == 0 then row2
                                  else row2 - (fmap (q*) row1)
             in if r /= 0
                   then egcd r a (fromRows [row2', row1])
@@ -91,7 +91,7 @@ extGCD a b = egcd a b (idMx 2)
 --   Method:
 --   Gauss method applied to the rows of matrix. Though α may be not
 --   a field, we repeat the remainder division to obtain zeroes down
---   in the column. 
+--   in the column.
 --
 staircase :: Integral α => SparseMatrix α -> (SparseMatrix α, SparseMatrix α)
 staircase m = staircase' m (idMx (height m))
@@ -107,10 +107,10 @@ staircase m = staircase' m (idMx (height m))
 --   Method:
 --   Gauss method applied to the rows of matrix. Though α may be not
 --   a field, we repeat the remainder division to obtain zeroes down
---   in the column. 
+--   in the column.
 --
 staircase' :: Integral a =>SparseMatrix a-> SparseMatrix a -> (SparseMatrix a, SparseMatrix a)
-staircase' mM mT | height mM 
+staircase' mM mT | height mM
                  /= height mT = error "height(mM) /= height(mT)"
                  | otherwise = sc 1 1 mM mT
     where                                  -- sc m t --> (m1,t1),
@@ -125,7 +125,7 @@ staircase' mM mT | height mM
                     else sc (ci+1) (cj+1) m t
 
 -- | Fills column with zeroes
-clearColumn :: Integral t 
+clearColumn :: Integral t
             => Index                            -- ^ row index (clears column beneath this row)
             -> Index                            -- ^ column index
             -> SparseMatrix t                   -- ^ matrix itself
@@ -133,7 +133,7 @@ clearColumn :: Integral t
             -> (SparseMatrix t, SparseMatrix t) -- ^ result matrix and changed protocol matrix
 clearColumn ci cj m t = cc (ks m) m t
   where ks mm = findRowIndices ((0/=) . (!cj)) mm
-        cc [k]      m t 
+        cc [k]      m t
            | k >= ci = (exchangeRows k ci m, exchangeRows k ci t)
         cc (i:j:ks) m t   -- i < j
            | i < ci = cc (j:ks) m t
@@ -157,8 +157,8 @@ clearColumn ci cj m t = cc (ks m) m t
         cc _ m t = (m, t)
 
 -- | Extended Euclid algorithm
---   
--- @extGCD a b@ returns @(x,y)@, such that 
+--
+-- @extGCD a b@ returns @(x,y)@, such that
 --
 -- @x · (a \<\> b) == gcd a b@
 --
@@ -167,7 +167,7 @@ clearColumn ci cj m t = cc (ks m) m t
 extGCD :: (Num α, Integral α) => α -> α -> (SparseVector α, SparseVector α)
 extGCD a b = (sparseList [x1,x2], sparseList [y1,y2])
     where (x1,x2,y1,y2) = egcd a b (1,0, 0,1)
-          egcd a b (x1,x2,y1,y2) = 
+          egcd a b (x1,x2,y1,y2) =
             let (q,r) = divMod b a  -- quotRem ???
                 (y1',y2') = if q == 0 then (y1,y2)
                                       else (y1-q*x1, y2-q*x2)

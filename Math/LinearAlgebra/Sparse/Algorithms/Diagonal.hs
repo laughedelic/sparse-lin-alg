@@ -1,5 +1,5 @@
 module Math.LinearAlgebra.Sparse.Algorithms.Diagonal
-( 
+(
 isDiag, toDiag
 )
 where
@@ -7,9 +7,9 @@ where
 import Data.Monoid
 import Data.IntMap   as M hiding ((!))
 
-import Math.LinearAlgebra.Sparse.Matrix 
+import Math.LinearAlgebra.Sparse.Matrix
 import Math.LinearAlgebra.Sparse.Vector
-import Math.LinearAlgebra.Sparse.Algorithms.Staircase 
+import Math.LinearAlgebra.Sparse.Algorithms.Staircase
 
 -- | Checks if matrix has diagonal form
 isDiag :: SparseMatrix α -> Bool
@@ -28,14 +28,14 @@ toDiag m = toDiag' m (idMx (height m))
 toDiag' m t u | isZeroMx m =  (m,t,u)
               | height m /= height t = error "height(mM) /= height(mT)"
               | width m /= width u   = error "width(mM) /= width(mU)"
-              | otherwise = 
+              | otherwise =
               let (s,t') = staircase' m t
               in  dm True s t' u
 
 -- Here  s  is a staircase matrix.
 -- If it is not diagonal, then transp(s) it brought to staircase
--- form - this corresponds to the column elementary 
--- transformations of s -  and so on,  until the diagonal matrix 
+-- form - this corresponds to the column elementary
+-- transformations of s -  and so on,  until the diagonal matrix
 -- is obtained (even number of `transp' to be applied).
 dm even s t u = case (even, isDiag s, trans s) of
     (True , True , _ ) -> (s , t, u)

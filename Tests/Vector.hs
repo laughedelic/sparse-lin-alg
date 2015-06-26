@@ -39,12 +39,12 @@ testgr_to_from_list = testGroup "TO/FROM LIST"
     ]
 
 
-prop_fill_sparse_vec = 
+prop_fill_sparse_vec =
     forAll (genSize (0,1000) >>= genSparseVector :: Gen (SparseVector Integer))
     $ \v -> sparseList (fillVec v) == v
 
-prop_sparse_fill_vec = 
-    forAll (genSize (0,1000) >>= genSparseList :: Gen [Integer]) 
+prop_sparse_fill_vec =
+    forAll (genSize (0,1000) >>= genSparseList :: Gen [Integer])
     $ \l -> fillVec (sparseList l) == l
 
 prop_vec_to_from_AssocList =
@@ -66,7 +66,7 @@ testgr_muls = testGroup "DOT PRODUCT"
     ]
 
 
-prop_dot = 
+prop_dot =
     forAll (genSize (1,1000)) $ \n ->
     forAll (genSparseVector n :: Gen (SparseVector Integer)) $ \x ->
     forAll (genSparseVector n :: Gen (SparseVector Integer)) $ \y ->
