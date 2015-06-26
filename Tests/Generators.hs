@@ -38,15 +38,15 @@ genIndex (m,n) | m > n     = return 0
 genIntMap :: Gen α       -- ^ generator for values
           -> Int         -- ^ size of IntMap
           -> (Int,Int)   -- ^ diapason of indicies
-          -> Gen (IntMap α) 
-genIntMap g n (a,b) = liftM M.fromList 
+          -> Gen (IntMap α)
+genIntMap g n (a,b) = liftM M.fromList
                    $ vectorOf n $ genPair (choose (a,b)) g
 
 --------------------------------------------------------------------------------
 -- SPARSE VECTOR DATATYPE --
 ----------------------------
 
--- | Generates sparse vector of given size with indecies in given diapason 
+-- | Generates sparse vector of given size with indecies in given diapason
 --   and arbitrary values
 genSVec :: (Arbitrary α, Ord α, Eq α, Num α) => Int -> (Int,Int) -> Gen (SVec α)
 genSVec = genIntMap genNonZero
@@ -84,9 +84,7 @@ genSparseMatrix (h,w) = do
 
 instance (Arbitrary α, Ord α, Eq α, Num α) => Arbitrary (SparseMatrix α) where
     arbitrary = genSparseMatrix =<< genPair genNonNegative genNonNegative
-        
+
 genAssocList :: (Arbitrary α, Ord α, Eq α, Num α) => Int -> (Int,Int) -> Gen [ ((Index,Index), α) ]
 genAssocList n (h,w) = liftM ( (((h,w),0) :) . nubBy ((==) `on` fst) ) $
     vectorOf n $ genPair (genPair (genIndex (1,h)) (genIndex (1,w))) genNonZero
-
-

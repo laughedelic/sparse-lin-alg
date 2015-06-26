@@ -9,7 +9,7 @@ import Tests.Matrix     (testgr_matrix)
 import Tests.Algorithms (testgr_algorithms)
 
 ----------------------------------------------------------------------
-main = defaultMain 
+main = defaultMain
      [ testgr_vector
      , testgr_matrix
      , testgr_algorithms
