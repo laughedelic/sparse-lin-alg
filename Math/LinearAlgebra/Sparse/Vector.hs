@@ -64,14 +64,14 @@ instance Functor SparseVector where
 instance Foldable SparseVector where
     foldr f d v = F.foldr f d (vec v)
 
--- | `Num` operators like @(*)@, @(+)@ and @(-)@ work on sparse vectors 
+-- | `Num` operators like @(*)@, @(+)@ and @(-)@ work on sparse vectors
 --   like @`zipWith` (…)@ works on lists, except size of result is maximum
 --   of arguments sizes.
 --
 --   `signum`, `abs` and `negate` work through `fmap`, so usual `Num` laws
 --   are satisfied (such as @(signum v)*(abs v) == v@.
 --
---   `fromInteger` constructs a vector with single element (only @fromInteger 0 = `emptyVec`@). So, 
+--   `fromInteger` constructs a vector with single element (only @fromInteger 0 = `emptyVec`@). So,
 --
 -- >>> 3 + (sparseList [0,2,1])
 -- sparseList [3,2,1]
@@ -87,7 +87,7 @@ instance (Eq α, Num α) => Num (SparseVector α) where
     abs           = fmap abs
     signum        = fmap signum
 
--- | Monoid `mappend` operation works like concatenation of two vectors 
+-- | Monoid `mappend` operation works like concatenation of two vectors
 --   (indexes of second are shifted by length of first)
 --
 --   Examples:
@@ -147,7 +147,7 @@ singVec x = SV 1 (singleton 1 x)
 --
 -- >>> partitionVec (>0) (sparseList [0,1,-1,2,3,0,-4,5,-6,0,7])
 -- ( sparseList [0,1,0,2,3,0,0,5,0,0,7], sparseList [-1,-4,-6] )
--- 
+--
 partitionVec :: (Num α) => (α -> Bool) -> SparseVector α -> (SparseVector α, SparseVector α)
 partitionVec p (SV d v) = (SV st t, SV (d-st) f)
     where (t,f) = partitionMap p v
@@ -201,12 +201,12 @@ vecToAssocList v = (dim v, 0) : (M.toAscList (vec v))
 
 -- | Converts associative list to sparse vector,
 --   of given size
-vecFromAssocListWithSize :: (Num α, Eq α) => Int -> [ (Index, α) ] -> SparseVector α 
-vecFromAssocListWithSize s l = L.foldl' vecIns (zeroVec s) l 
+vecFromAssocListWithSize :: (Num α, Eq α) => Int -> [ (Index, α) ] -> SparseVector α
+vecFromAssocListWithSize s l = L.foldl' vecIns (zeroVec s) l
 
 -- | Converts associative list to sparse vector,
 --   using maximal index as it's size
-vecFromAssocList :: (Num α, Eq α) => [ (Index, α) ] -> SparseVector α 
+vecFromAssocList :: (Num α, Eq α) => [ (Index, α) ] -> SparseVector α
 vecFromAssocList l = vecFromAssocListWithSize (L.maximum $ fmap fst l) l
 
 --------------------------------------------------------------------------------
