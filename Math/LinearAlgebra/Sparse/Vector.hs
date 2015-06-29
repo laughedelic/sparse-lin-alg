@@ -39,6 +39,7 @@ import Data.Foldable as F
 import Data.List     as L
 import Data.IntMap   as M hiding ((!))
 import Data.Monoid
+import Data.Maybe
 
 
 --------------------------------------------------------------------------------
@@ -219,4 +220,4 @@ dot = (·)
 
 -- | Unicode alias for `dot`
 (·) :: (Eq α, Num α) => SparseVector α -> SparseVector α -> α
-v · w = (vec v) ·· (vec w)
+v · w = fromMaybe 0 $ (vec v) ·· (vec w) 

@@ -10,11 +10,20 @@ import Data.IntMap   as M
 -----------------------------------------
 
 -- | Dot product of two `IntMap`s (for internal use)
-(··) :: (Num α) => IntMap α -> IntMap α -> α
-v ·· w = M.foldl' (+) 0 $ M.intersectionWith (*) v w
+(··) :: (Num α, Eq α) => IntMap α -> IntMap α -> Maybe α
+v ·· w = case M.foldl' (+) 0 $ M.intersectionWith (*) v w of
+  0 -> Nothing
+  x -> Just x
 --    M.foldlWithKey' f 0 v
 --    where f acc 0 _ = acc
 --          f acc i x = acc + ((findWithDefault 0 i w) * x)
+
+-- | Dot product of first `IntMap` with all `IntMap`s in second `IntMap`
+--   (for internal use)
+(···) :: (Num a, Eq a) => IntMap a -> IntMap (IntMap a) -> Maybe (IntMap a)
+r ··· m = case M.mapMaybe (r ··) m of v
+                                          | M.null v  -> Nothing
+                                          | otherwise -> Just v
 
 -- | Shifts (re-enumerates) keys of IntMap by given number
 shiftKeys :: Int -> IntMap α -> IntMap α
